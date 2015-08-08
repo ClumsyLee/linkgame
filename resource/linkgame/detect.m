@@ -16,9 +16,10 @@ function bool = detect(mtx, x1, y1, x2, y2)
     % 输出参数bool = 1表示可以消去，bool = 0表示不能消去。
 
     %% 在下面添加你的代码O(∩_∩)O
-    bool = zero_turn(mtx, x1, y1, x2, y2) || ...
-           one_turn(mtx, x1, y1, x2, y2) || ...
-           two_turns(mtx, x1, y1, x2, y2);
+    bool = mtx(x1, y1) == mtx(x2, y2) && ...
+           (zero_turn(mtx, x1, y1, x2, y2) || ...
+            one_turn(mtx, x1, y1, x2, y2) || ...
+            two_turns(mtx, x1, y1, x2, y2));
 end
 
 %% zero_turn: Judge whether two blocks have only spaces in between.
@@ -58,10 +59,10 @@ function bool = two_turns(mtx, x1, y1, x2, y2)
 
     for k = 1:4
         delta = direction(k, :);
-        pos = [x1 x2] + delta;
+        pos = [x1 y1] + delta;
 
         while pos > [0 0] & pos <= size(mtx)
-            if mtx[pos(1), pos(2)] ~= 0  % Spaces ended.
+            if mtx(pos(1), pos(2)) ~= 0  % Spaces ended.
                 break
             elseif one_turn(mtx, pos(1), pos(2), x2, y2)
                 bool = 1;
