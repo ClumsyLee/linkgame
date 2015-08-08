@@ -28,7 +28,8 @@ function [period, blank] = find_horizontal_period(img)
     len = length(hline);
     f = [0:len-1] / len;
     f_domain = fft(hline);
-    [~, index] = max(abs(f_domain));
+
+    index = find_baseband_index(f_domain);  % Find the baseband.
 
     period = round(1 / f(index));
     phase_pixel = round(angle(f_domain(index)) / (2 * pi * f(index)));
@@ -38,11 +39,35 @@ function [period, blank] = find_horizontal_period(img)
         blank = period - phase_pixel;
     end
 
-    figure
-    plot(f, abs(f_domain));
+    % figure
+    % plot(f, abs(f_domain));
 
-    figure
-    hold on
-    plot(hline);
-    plot(max(abs(hline)) / 2 * cos(2 * pi / period * ([0:len-1] - blank)));
+    % figure
+    % hold on
+    % plot(hline);
+    % plot(max(abs(hline)) / 2 * cos(2 * pi / period * ([0:len-1] - blank)));
+end
+
+%% find_baseband_index: Find the index of the baseband
+function baseband = find_baseband_index(f_domain)
+    f = abs(f_domain);
+    [max_wight, max_band] = max(f);
+
+    %% Find base band.
+    baseband = max_band;
+    for ratio = [2, 3, 4]
+        band = (max_band - 1) / ratio + 1;
+        [maximum, index] = max_around(f, band, 0.05);
+        if maximum > 0.8 * max_wight
+            baseband = index;
+        end
+    end
+end
+
+%% max_around: Find maximum around a index.
+function [maximum, index] = max_around(x, index, error_ratio)
+    from = ceil(index *  (1 - error_ratio));
+    to   = floor(index * (1 + error_ratio));
+    [maximum, index] = max(x(from:to));
+    index = index + from - 1;
 end
