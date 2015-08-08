@@ -42,7 +42,34 @@ function bool = one_turn(mtx, x1, y1, x2, y2)
             mtx(x1, y2) == 0);
 end
 
-%% two_turns:
+%% two_turns: Assuming not zero or one turn.
 function bool = two_turns(mtx, x1, y1, x2, y2)
+    % Pad the matrix for the possible links.
+    mtx = padarray(mtx, [1, 1]);
+    x1 = x1 + 1;
+    y1 = y1 + 1;
+    x2 = x2 + 1;
+    y2 = y2 + 1;
+
+    direction = [ 0  1
+                  0 -1
+                  1  0
+                 -1  0];
+
+    for k = 1:4
+        delta = direction(k, :);
+        pos = [x1 x2] + delta;
+
+        while pos > [0 0] & pos <= size(mtx)
+            if mtx[pos(1), pos(2)] ~= 0  % Spaces ended.
+                break
+            elseif one_turn(mtx, pos(1), pos(2), x2, y2)
+                bool = 1;
+                return
+            end
+            pos = pos + delta;
+        end
+    end
+
     bool = 0;
 end
