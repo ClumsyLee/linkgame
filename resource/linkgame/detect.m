@@ -16,29 +16,13 @@ function bool = detect(mtx, x1, y1, x2, y2)
     % 输出参数bool = 1表示可以消去，bool = 0表示不能消去。
 
     %% 在下面添加你的代码O(∩_∩)O
-
-    [row, col] = size(mtx);
-    bool = 0;
-
-    % Zero turn.
-    if spaces_in_between(mtx, x1, y1, x2, y2)
-        bool = 1;
-    end
-
-    % One turn.
-    if spaces_in_between(mtx, x1, y1, x2, y1) && ...
-       spaces_in_between(mtx, x2, y1, x2, y2) && ...
-       mtx(x2, y1) == 0 || ...
-       spaces_in_between(mtx, x1, y1, x1, y2) && ...
-       spaces_in_between(mtx, x1, y2, x2, y2) && ...
-       mtx(x1, y2) == 0
-        bool = 1;
-    end
-
+    bool = zero_turn(mtx, x1, y1, x2, y2) || ...
+           one_turn(mtx, x1, y1, x2, y2) || ...
+           two_turns(mtx, x1, y1, x2, y2);
 end
 
-%% spaces_in_between: Judge whether two blocks have only spaces in between.
-function bool = spaces_in_between(mtx, x1, y1, x2, y2)
+%% zero_turn: Judge whether two blocks have only spaces in between.
+function bool = zero_turn(mtx, x1, y1, x2, y2)
     left = min(x1, x2);
     right = max(x1, x2);
     down = min(y1, y2);
@@ -48,4 +32,17 @@ function bool = spaces_in_between(mtx, x1, y1, x2, y2)
             y1 == y2 && all(mtx(left+1:right-1, y1) == 0));
 end
 
+%% one_turn: Judge whether two blocks can be linked in one turn.
+function bool = one_turn(mtx, x1, y1, x2, y2)
+    bool = (zero_turn(mtx, x1, y1, x2, y1) && ...
+            zero_turn(mtx, x2, y1, x2, y2) && ...
+            mtx(x2, y1) == 0 || ...
+            zero_turn(mtx, x1, y1, x1, y2) && ...
+            zero_turn(mtx, x1, y2, x2, y2) && ...
+            mtx(x1, y2) == 0);
+end
 
+%% two_turns:
+function bool = two_turns(mtx, x1, y1, x2, y2)
+    bool = 0;
+end
