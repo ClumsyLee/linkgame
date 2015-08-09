@@ -20,3 +20,16 @@ function [ground, legends] = map_game(imgs, matches, values, ...
             ground(ground == kinds(2)) = kinds(1);
         end  % Else already the same.
     end
+
+    % Normalize kind number.
+    new_kind_num = 1;
+    for kind = 1:kind_num-1
+        poses = find(ground == kind);
+        if poses
+            ground(poses) = new_kind_num;
+            legends{new_kind_num} = legends{kind};
+            new_kind_num = new_kind_num + 1;
+        end
+    end
+
+    legends = legends(1:new_kind_num-1);
