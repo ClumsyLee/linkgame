@@ -71,10 +71,12 @@ function high_freq_img = highpass_img(img, order)
 
 ```matlab
 %% match_imgs: Match images
-function similarity = match_imgs(imgs, order)
+function similarity = match_imgs(imgs, order, margin_ratio)
     img_num = numel(imgs);
     high_imgs = cell(img_num, 1);
     similarity = eye(img_num);
+
+    margin = round(margin_ratio * size(imgs{1}));
 
     for k = 1:img_num
         high_imgs{k} = highpass_img(imgs{k}, order);
@@ -82,7 +84,17 @@ function similarity = match_imgs(imgs, order)
 
     for k1 = 1:img_num-1
         for k2 = k1+1:img_num
-            corr = max(max(normxcorr2(high_imgs{k1}, high_imgs{k2})));
+            img1 = high_imgs{k1};
+            img2 = high_imgs{k2};
+
+            corr1 = max(max(normxcorr2(img1(1+margin(1):end-margin(1), ...
+                                            1+margin(2):end-margin(2)), ...
+                                       img2)));
+            corr2 = max(max(normxcorr2(img2(1+margin(1):end-margin(1), ...
+                                            1+margin(2):end-margin(2)), ...
+                                       img1)));
+            corr = max([corr1 corr2]);
+
             similarity(k1, k2) = corr;
             similarity(k2, k1) = corr;
         end
@@ -109,7 +121,7 @@ function [matches, values] = sort_match(similarity)
 我们先将匹配结果存至变量中：
 
 ```matlab
-sim = match_imgs(imgs, 20);
+sim = match_imgs(imgs, 20, 0.2);
 [matches, values] = sort_match(sim);
 ```
 
@@ -150,7 +162,7 @@ show_matches(imgs, matches(match_range, :), values(match_range));
 通过人工查找，将相似度最大的前十误匹配显示出来：
 
 ```matlab
-match_range = [40; 44; 46; 48; 49; 50; 52; 53; 55; 57; 60];
+match_range = [181 183:191];
 show_matches(imgs, matches(match_range, :), values(match_range));
 ```
 

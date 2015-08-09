@@ -1,6 +1,5 @@
 %% map_game: Map imgs into a game ground.
-function [ground, legends] = map_game(imgs, matches, values, ...
-                                      accept_threshold, combine_threshold)
+function [ground, legends] = map_game(imgs, matches, values, accept_threshold)
     ground = zeros(size(imgs));
 
     kind_num = 1;
