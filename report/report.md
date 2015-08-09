@@ -21,7 +21,8 @@
 ### 2.1 对屏幕截图分块
 
 ```matlab
-show_divided_img(divide_img(graycapture));
+imgs_truth = divide_img(graycapture);
+show_divided_img(imgs_truth);
 ```
 
 ![分块结果](divide_graygroundtruth.png)
@@ -29,7 +30,8 @@ show_divided_img(divide_img(graycapture));
 ### 2.2 对摄像头采集到的图像分块
 
 ```matlab
-show_divided_img(divide_img(graygroundtruth));
+imgs = divide_img(graygroundtruth);
+show_divided_img(imgs);
 ```
 
 ![分块结果](divide_graycapture.png)
@@ -104,7 +106,56 @@ function [matches, values] = sort_match(similarity)
     matches = matches(from < to, :);
 ```
 
-### 2.4
+我们先将匹配结果存至变量中：
+
+```matlab
+sim = match_imgs(imgs, 20);
+[matches, values] = sort_match(sim);
+```
+
+同时，我们编写函数展示匹配结果：
+
+```matlab
+%% show_matches: Show matches in two columns.
+function show_matches(imgs, matches, values)
+    row = length(matches);
+
+    for k = 1:row
+        match = matches(k, :);
+
+        subplot(row, 2, 2 * k - 1);
+        imshow(imgs{match(1)});
+        title(['Block ' num2str(match(1))]);
+        ylabel(values(k))
+
+        subplot(row, 2, 2 * k);
+        imshow(imgs{match(2)});
+        title(['Block ' num2str(match(2))]);
+    end
+```
+
+然后我们显示相似度最大的十对图像块：
+
+```matlab
+match_range = 1:10;
+show_matches(imgs, matches(match_range, :), values(match_range));
+```
+
+![相似度最大的十对图像块](10_matches.png)
+
+可以看到，这十对图片确实是正确匹配的。
+
+### 2.4 找到前十误匹配
+
+通过人工查找，将相似度最大的前十误匹配显示出来：
+
+```matlab
+match_range = [40; 44; 46; 48; 49; 50; 52; 53; 55; 57; 60];
+show_matches(imgs, matches(match_range, :), values(match_range));
+```
+
+![相似度最大的十对误匹配图像块](10_mismatches.png)
+
 ### 2.5
 ### 2.6
 ### 2.7
