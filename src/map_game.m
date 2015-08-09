@@ -14,7 +14,7 @@ function [ground, legends] = map_game(imgs, matches, values, ...
             ground(match) = kind_num;
             legends{kind_num} = imgs{match(1)};
             kind_num = kind_num + 1;
-        elseif any(kinds == 0)  % Old kind, one not classified.
+        elseif any(kinds == 0)  % One old kind, one not classified.
             ground(match) = max(kinds);
         elseif kinds(1) ~= kinds(2)  % Old kind & close, combine.
             ground(ground == kinds(2)) = kinds(1);
