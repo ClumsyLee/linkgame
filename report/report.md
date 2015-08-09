@@ -122,6 +122,7 @@ function [matches, values] = sort_match(similarity)
 
 ```matlab
 sim = match_imgs(imgs, 20, 0.2);
+sim_truth = match_imgs(imgs_truth, 20, 0.2);
 [matches, values] = sort_match(sim);
 ```
 
@@ -157,6 +158,12 @@ show_matches(imgs, matches(match_range, :), values(match_range));
 
 可以看到，这十对图片确实是正确匹配的。
 
+为了更形象化地看到我们匹配的结果，我们对 `sim` 和 `sim_truth` 进行绘图：
+
+![图像块相关性](imgs_corr.png)
+
+可以看到，很明显地，有一些元素的值明显高于周围元素的值。同时，虽然右图中背景杂音较大，但还是能够清晰地辨认出匹配对。这便是匹配函数设计合理的标志。
+
 ### 2.4 找到前十误匹配
 
 通过人工查找，将相似度最大的前十误匹配显示出来：
@@ -168,7 +175,69 @@ show_matches(imgs, matches(match_range, :), values(match_range));
 
 ![相似度最大的十对误匹配图像块](10_mismatches.png)
 
-### 2.5
+### 2.5 映射游戏区域
+
+为了将图像块映射成索引值数组，我们设定一个阈值，并接受所有阈值以上的匹配对。然后，我们只需要找到这些匹配对中的各个等价类，便可以得到索引值数组。同时，从每个等价类中取出一块作为图例，便可得到分块对照表。代码如下：
+
+```matlab
+%% map_game: Map imgs into a game ground.
+function [ground, legends] = map_game(imgs, matches, values, accept_threshold)
+    ground = zeros(size(imgs));
+
+    kind_num = 1;
+
+    % Accpet all close matches.
+    last_close = find(values < accept_threshold) - 1;
+    for k = 1:last_close
+        match = matches(k, :);
+        kinds = ground(match);
+        if kinds == 0  % New kind.
+            ground(match) = kind_num;
+            legends{kind_num} = imgs{match(1)};
+            kind_num = kind_num + 1;
+        elseif any(kinds == 0)  % One old kind, one not classified.
+            ground(match) = max(kinds);
+        elseif kinds(1) ~= kinds(2)  % Old kind & close, combine.
+            ground(ground == kinds(2)) = kinds(1);
+        end  % Else already the same.
+    end
+
+    % Normalize kind number.
+    new_kind_num = 1;
+    for kind = 1:kind_num-1
+        poses = find(ground == kind);
+        if poses
+            ground(poses) = new_kind_num;
+            legends{new_kind_num} = legends{kind};
+            new_kind_num = new_kind_num + 1;
+        end
+    end
+
+    legends = legends(1:new_kind_num-1);
+```
+
+这里我们选取阈值为 0.84：
+
+```matlab
+[ground, legends] = map_game(imgs, matches, values, 0.84);
+```
+
+得到索引数组如下：
+
+    9   14  9   7   6   19  5   10  1   4   4   17
+    15  7   17  12  17  2   1   8   4   16  18  1
+    11  3   4   16  12  15  5   12  14  5   11  15
+    12  3   1   12  14  1   5   7   5   15  12  11
+    18  14  8   6   3   4   3   4   2   10  12  7
+    11  1   13  11  9   13  11  10  6   2   10  1
+    2   1   5   4   6   19  17  9   2   4   12  2
+
+图例如下：
+
+![图例](legends.png)
+
+可以看到，我们成功正确识别了所有块。
+
 ### 2.6
 ### 2.7
 ### 2.8
