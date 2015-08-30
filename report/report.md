@@ -136,21 +136,115 @@ end
 
 ### 2.1 对屏幕截图分块
 
+为了借助傅里叶变换实现图像分块，我们首先要确定每块的大小，以及左上方的空白大小。这只需要对行/列去除直流分量，并取平均，然后用 `fft` 处理，提取出基频分量即可。其中，基频分量的提取使用了实验一中的实现方式（在最高峰频率 1/2, 1/3, 1/4 处寻找基频）。代码如下：
+
 ```matlab
-imgs_truth = divide_img(graycapture);
+%% find_horizontal_period: Find
+function [period, blank] = find_horizontal_period(img)
+    % Remove AC component.
+    hline = mean(double(img) - mean(mean(img)));
+
+    len = length(hline);
+    f = [0:len-1] / len;
+    f_domain = fft(hline);
+
+    index = find_baseband_index(f_domain);  % Find the baseband.
+
+    period = round(1 / f(index));
+    phase_pixel = round(angle(f_domain(index)) / (2 * pi * f(index)));
+    if phase_pixel <= 0
+        blank = -phase_pixel;
+    else
+        blank = period - phase_pixel;
+    end
+end
+
+%% find_baseband_index: Find the index of the baseband
+function baseband = find_baseband_index(f_domain)
+    f = abs(f_domain);
+    [max_wight, max_band] = max(f);
+
+    %% Find base band.
+    baseband = max_band;
+    for ratio = [2, 3, 4]
+        band = (max_band - 1) / ratio + 1;
+        [maximum, index] = max_around(f, band, 0.05);
+        if maximum > 0.8 * max_wight
+            baseband = index;
+        end
+    end
+end
+
+%% max_around: Find maximum around a index.
+function [maximum, index] = max_around(x, index, error_ratio)
+    from = ceil(index *  (1 - error_ratio));
+    to   = floor(index * (1 + error_ratio));
+    [maximum, index] = max(x(from:to));
+    index = index + from - 1;
+end
+```
+
+然后，我们只需要利用上面得到的信息，将图像分割开来即可：
+
+```matlab
+%% divide_img: Divide image into blocks
+function [blocks, h_period, h_blank, v_period, v_blank] = divide_img(img)
+    [h_period, h_blank] = find_horizontal_period(img);
+    [v_period, v_blank] = find_horizontal_period(img');
+
+    blocks = cell(floor((size(img) - [v_blank h_blank]) ./ ...
+                        [v_period h_period]));
+
+    row_max = size(img, 1) - v_period + 1;
+    col_max = size(img, 2) - h_period + 1;
+
+    k = 1;
+    blocks = blocks';
+    for row = v_blank+1:v_period:row_max
+        for col = h_blank+1:h_period:col_max
+            blocks{k} = img(row:row+v_period-1, col:col+h_period-1);
+            k = k + 1;
+        end
+    end
+    blocks = blocks';
+end
+```
+
+让我们来检测一下分块结果：
+
+```matlab
+imgs_truth = divide_img(graygroundtruth);
 show_divided_img(imgs_truth);
 ```
 
+![分块结果](horizontal_truth.png)
+
+![分块结果](vertical_truth.png)
+
 ![分块结果](divide_graygroundtruth.png)
+
+可以看到，傅里叶变换的基频确实反映出了块的周期性，而我们也得到了基本正确的分块结果。
 
 ### 2.2 对摄像头采集到的图像分块
 
+让我们对摄像头采集到的图像进行同样的处理：
+
 ```matlab
-imgs = divide_img(graygroundtruth);
+imgs = divide_img(graycapture);
 show_divided_img(imgs);
 ```
 
+![分块结果](horizontal.png)
+
+![分块结果](vertical.png)
+
 ![分块结果](divide_graycapture.png)
+
+可以看到，我们的分块结果仍然基本正确。
+
+从较上方的两幅图中可以看出，横向及纵向交流均值的频谱相对于 2.1 有比较大的扰动，例如，横向似乎出现了一个频率很低的低频分量。在挑选基频时，这显然会给我们的程序带来一定的困扰。
+
+不过，最后正确的结果也说明，这种利用傅里叶变换的分块方法有着不错的抗干扰能力，能在图像有一定扰动、失焦、变形的情况下分析出正确结果。
 
 ### 2.3 计算分块相似性
 
