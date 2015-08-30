@@ -1,5 +1,5 @@
 %% divide_img: Divide image into blocks
-function blocks = divide_img(img)
+function [blocks, h_period, h_blank, v_period, v_blank] = divide_img(img)
     [h_period, h_blank] = find_horizontal_period(img);
     [v_period, v_blank] = find_horizontal_period(img');
 

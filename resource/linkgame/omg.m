@@ -22,8 +22,49 @@ function steps = omg(mtx)
 
     %% --------------  请在下面加入你的代码 O(∩_∩)O~  ------------
 
-    [m, n] = size(mtx);
+    steps = [];
 
-    steps(1) = 0;
+    msize = size(mtx);
+    patterns = unique(mtx);
+    patterns = patterns(patterns ~= 0);
+
+    % Generate possible pairs.
+    pairs = [];
+    for pattern = patterns'
+        poses = find(mtx == pattern);
+        len = length(poses);
+        for k1 = 1:len-1
+            for k2 = k1+1:len
+                pairs = [pairs
+                         poses(k1) poses(k2)];
+             end
+         end
+    end
+
+    used = 1;  % To enter the loop.
+    while any(used)
+        pair_num = size(pairs, 1);
+        used = logical(zeros(pair_num, 1));
+
+        for k = 1:pair_num
+            if used(k)
+                continue
+            end
+            index1 = pairs(k, 1);
+            index2 = pairs(k, 2);
+
+            [x1, y1] = ind2sub(msize, index1);
+            [x2, y2] = ind2sub(msize, index2);
+            if detect(mtx, x1, y1, x2, y2)  % A match.
+                mtx(index1) = 0;
+                mtx(index2) = 0;
+                steps = [steps x1 y1 x2 y2];
+                used(any((pairs == index1 | pairs == index2)')) = 1;
+            end
+        end
+        pairs(used, :) = [];  % Remove used.
+    end
+
+    steps = [length(steps) / 4, steps];
 end
 
