@@ -67,4 +67,3 @@ function steps = omg(mtx)
 
     steps = [length(steps) / 4, steps];
 end
-
