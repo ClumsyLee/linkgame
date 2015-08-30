@@ -61,10 +61,9 @@ function bool = two_turns(mtx, x1, y1, x2, y2)
         delta = direction(k, :);
         pos = [x1 y1] + delta;
 
-        while pos > [0 0] & pos <= size(mtx)
-            if mtx(pos(1), pos(2)) ~= 0  % Spaces ended.
-                break
-            elseif one_turn(mtx, pos(1), pos(2), x2, y2)
+        % Toward if possible.
+        while all(pos > [0 0] & pos <= size(mtx)) && mtx(pos(1), pos(2)) == 0
+            if one_turn(mtx, pos(1), pos(2), x2, y2)
                 bool = 1;
                 return
             end
