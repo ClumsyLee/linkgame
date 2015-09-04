@@ -38,6 +38,15 @@ function [period, blank] = find_horizontal_period(img)
     else
         blank = period - phase_pixel;
     end
+
+    % figure
+    % plot(f, abs(f_domain));
+
+    % figure
+    % hold on
+    % plot(hline);
+    % plot(max(abs(hline)) / 2 * cos(2 * pi / period * ([0:len-1] - blank)));
+
 end
 
 %% find_baseband_index: Find the index of the baseband
